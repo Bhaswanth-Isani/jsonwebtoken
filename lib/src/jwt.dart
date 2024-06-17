@@ -21,7 +21,7 @@ class JWT {
   /// - RSAPublicKey with RSA algorithm
   /// - ECPublicKey with ECDSA algorithm
   /// - EdDSAPublicKey with EdDSA algorithm
-  static bool verify(
+  static dynamic verify(
     String token,
     String key, {
     bool checkHeaderType = true,
@@ -92,9 +92,9 @@ class JWT {
           }
         }
 
-        return true;
+        return payload;
       } else {
-        return true;
+        return payload;
       }
     } catch (ex, stackTrace) {
       if (ex is Exception && ex is! JWTException) {
@@ -106,7 +106,7 @@ class JWT {
   }
 
   /// Exactly like `verify`, just return null instead of throwing exceptions.
-  static bool? tryVerify(
+  static dynamic tryVerify(
     String token,
     String key, {
     bool checkHeaderType = true,
@@ -209,7 +209,9 @@ class JWT {
       String b64Payload;
       try {
         b64Payload = base64Unpadded(
-          payload is String ? base64.encode(utf8.encode(payload)) : jsonBase64.encode(payload),
+          payload is String
+              ? base64.encode(utf8.encode(payload))
+              : jsonBase64.encode(payload),
         );
       } catch (ex) {
         throw JWTException(
