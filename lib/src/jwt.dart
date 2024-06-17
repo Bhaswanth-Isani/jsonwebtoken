@@ -28,6 +28,9 @@ class JWT {
     bool checkExpiresIn = true,
     bool checkNotBefore = true,
     Duration? issueAt,
+    String? subject,
+    String? issuer,
+    String? jwtId,
   }) {
     try {
       final parts = token.split('.');
@@ -41,9 +44,9 @@ class JWT {
         throw JWTInvalidException('not a jwt');
       }
 
-      final algorithm = JWTAlgorithm.fromName(header['alg'] as String);
+      final algorithm = JWTAlgorithm.fromName('HS256');
 
-      final body = utf8.encode('${parts[0]}.${parts[1]}');
+      final body = utf8.encode(parts[0] + '.' + parts[1]);
       final signature = base64Url.decode(base64Padded(parts[2]));
 
       if (!algorithm.verify(key, Uint8List.fromList(body), signature)) {
@@ -58,44 +61,7 @@ class JWT {
         payload = utf8.decode(base64.decode(base64Padded(parts[1])));
       }
 
-      if (payload is Map) {
-        // exp
-        if (checkExpiresIn && payload.containsKey('exp')) {
-          final exp = DateTime.fromMillisecondsSinceEpoch(
-            ((payload['exp'] as double) * 1000).toInt(),
-          );
-          if (exp.isBefore(clock.now())) {
-            throw JWTExpiredException();
-          }
-        }
-
-        // nbf
-        if (checkNotBefore && payload.containsKey('nbf')) {
-          final nbf = DateTime.fromMillisecondsSinceEpoch(
-            ((payload['nbf'] as double) * 1000).toInt(),
-          );
-          if (nbf.isAfter(clock.now())) {
-            throw JWTNotActiveException();
-          }
-        }
-
-        // iat
-        if (issueAt != null) {
-          if (!payload.containsKey('iat')) {
-            throw JWTInvalidException('invalid issue at');
-          }
-          final iat = DateTime.fromMillisecondsSinceEpoch(
-            ((payload['iat'] as double) * 1000).toInt(),
-          );
-          if (!iat.isAtSameMomentAs(clock.now())) {
-            throw JWTInvalidException('invalid issue at');
-          }
-        }
-
-        return payload;
-      } else {
-        return payload;
-      }
+      return payload;
     } catch (ex, stackTrace) {
       if (ex is Exception && ex is! JWTException) {
         throw JWTUndefinedException(ex, stackTrace);
